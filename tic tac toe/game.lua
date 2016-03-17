@@ -1,3 +1,5 @@
 require "performer"
 
-Performer:getInstance():startAGame()
+for i=1,300 do
+	Performer:getInstance():startAGame()
+end
