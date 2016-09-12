@@ -6,14 +6,14 @@ local pid = 0
 
 function Player:ctor(side, isTrainer)
 	self.side = side
+	if side == SIDE_X then
+		self.opponentSide = SIDE_O
+	else
+		self.opponentSide = SIDE_X
+	end
 	self.isTrainer = isTrainer
 	pid = pid + 1
 	self.id = pid
-end
-
--- 设置对手
-function Player:setOpponent(opponent)
-	self.opponent = opponent
 end
 
 -- 针对当前盘面，做出下一步棋的落子选择
@@ -31,8 +31,8 @@ function Player:makeAMove(board)
 
 	for _,move in ipairs(moveList) do
 		local newBoard = clone(board)
-		move[4] = newBoard
 		newBoard[move[1]][move[2]] = self.side
+		move[4] = newBoard
 		local successorBoard = self:getSuccessorBoard(newBoard)
 		move[3] = self:getBoardValue(successorBoard)
 	end
@@ -61,9 +61,10 @@ function Player:getSuccessorBoard(board)
 
 	for _,move in ipairs(moveList) do
 		local newBoard = clone(board)
-		newBoard[move[1]][move[2]] = self.opponent.side
+		newBoard[move[1]][move[2]] = self.opponentSide
 		move[4] = newBoard
-		move[3] = self.opponent:getBoardValue(newBoard, self.opponent.side)
+		-- 依赖自己对对手下一步的估计来模拟对手的下一步落子
+		move[3] = self:getBoardValue(newBoard, self.opponentSide)
 	end
 	table.sort(moveList, function(pre, post)
 		return pre[3] > post[3]
@@ -72,15 +73,24 @@ function Player:getSuccessorBoard(board)
 end
 
 -- 盘面状态函数
-function Player:getBoardParams(board)
-	return getBoardParams(board, self.side)
+function Player:getBoardParams(board, side)
+	side = side or self.side
+	return getBoardParams(board, side)
 end
 
 -- 盘面估值函数
-function Player:getBoardValue(board, side)
+function Player:getBoardValue(board, side, isTrainer)
 	side = side or self.side
-	local xl = self:getBoardParams(board, side)
-	if self.isTrainer then
+	isTrainer = isTrainer or self.isTrainer
+	local xl, nullNum = self:getBoardParams(board, side)
+	if xl[1] >= 1 then
+		return VALUE_WINED
+	elseif xl[2] >= 1 then
+		return VALUE_LOST
+	elseif nullNum == 0 then
+		return VALUE_DRAW
+	end
+	if isTrainer then
 		local trainer = Trainer:getInstance()
 		return trainer.w0 + xl[1] * trainer.w1 + xl[2] * trainer.w2 + xl[3] * trainer.w3 + xl[4] * trainer.w4
 	else

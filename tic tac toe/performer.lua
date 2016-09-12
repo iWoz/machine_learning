@@ -10,40 +10,40 @@ function Performer:ctor()
 	self.drawedNum = 0
 end
 
--- 开始新的对局
-function Performer:startAGame()
-	local playerTrainer = Player:create(SIDE_X, true)
-	local playerTester = Player:create(SIDE_O)
-	playerTrainer:setOpponent(playerTester)
-	playerTester:setOpponent(playerTrainer)
-
+-- 开始新的训练
+function Performer:startTrain()
+	local trainer1 = Player:create(SIDE_X, true)
+	local trainer2 = Player:create(SIDE_O, true)
 	local moveIdx = 0
-	self.board = self:genNewBoard()
-	print("start ======")
-	-- printBoard(self.board)
 	local trainValue = 0
+	self.board = self:genNewBoard()
+
 	while not self:isGameOver() do
+		local preBoard = clone(self.board)
 		if moveIdx % 2 == 0 then
-			self.board, trainValue = playerTrainer:makeAMove(self.board)
-			Trainer:getInstance():addTrainPair(playerTrainer, self.board, trainValue)
+			self.board, trainValue = trainer1:makeAMove(self.board)
+			Trainer:getInstance():addTrainPair(trainer1, preBoard, trainValue)
 		else
-			self.board, trainValue = playerTester:makeAMove(self.board)
+			self.board, trainValue = trainer2:makeAMove(self.board)
+			-- Trainer:getInstance():addTrainPair(trainer2, preBoard, trainValue)
 		end
 		moveIdx = moveIdx + 1
-		-- printBoard(self.board)
 	end
-	-- printBoard(self.board)
-	self.playedNum = self.playedNum + 1
-	local xl, nullNum = getBoardParams(self.board, playerTrainer.side)
-	if xl[3] >= 1 then
-		self.winedNum = self.winedNum + 1
-	elseif xl[4] >= 1 then
-		self.lostNum = self.lostNum + 1
+
+	local xl, nullNum = getBoardParams(self.board, trainer1.side)
+	if xl[1] >= 1 then
+		Trainer:getInstance():addTrainPair(trainer1, self.board, VALUE_WINED)
+		-- Trainer:getInstance():addTrainPair(trainer2, self.board, VALUE_LOST)
+	elseif xl[2] >= 1 then
+		Trainer:getInstance():addTrainPair(trainer1, self.board, VALUE_LOST)
+		-- Trainer:getInstance():addTrainPair(trainer2, self.board, VALUE_WINED)
 	else
-		self.drawedNum = self.drawedNum + 1
+		Trainer:getInstance():addTrainPair(trainer1, self.board, VALUE_DRAW)
+		-- Trainer:getInstance():addTrainPair(trainer2, self.board, VALUE_DRAW)
 	end
-	print(string.format("Win Rate:%.2f, Lost Rate:%.2f, Draw Rate:%.2f", self.winedNum / self.playedNum, self.lostNum / self.playedNum, self.drawedNum / self.playedNum))
+
 	Trainer:getInstance():startTrain()
+
 end
 
 -- 生成新局面
@@ -63,5 +63,5 @@ function Performer:isGameOver(board)
 		return true
 	end
 	local xl, nullNum = getBoardParams(board, SIDE_X)
-	return xl[3] >= 1 or xl[4] >= 1 or nullNum == 0
+	return xl[1] >= 1 or xl[2] >= 1 or nullNum == 0
 end

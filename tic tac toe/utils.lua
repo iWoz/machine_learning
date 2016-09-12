@@ -10,13 +10,13 @@ function getBoardParams(board, side)
 
 	local function account(dic)
 		if dic[SIDE_X] == 3 then
-			side_x_2 = side_x_2 + 1
-		elseif dic[SIDE_O] == 3 then
-			side_o_2 = side_o_2 + 1 
-		elseif dic[SIDE_X] == 2 and dic[SIDE_O] == 0 then
 			side_x_1 = side_x_1 + 1
+		elseif dic[SIDE_O] == 3 then
+			side_o_1 = side_o_1 + 1 
+		elseif dic[SIDE_X] == 2 and dic[SIDE_O] == 0 then
+			side_x_2 = side_x_2 + 1
 		elseif dic[SIDE_O] == 2 and dic[SIDE_X] == 0 then
-			side_o_1 = side_o_1 + 1
+			side_o_2 = side_o_2 + 1
 		end
 		side_null = side_null + dic[SIDE_NULL]
 	end
